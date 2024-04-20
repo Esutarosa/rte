@@ -11,7 +11,7 @@ fn main() {
         let byte = byte.unwrap();
         println!("byte: {}\r", byte);
         println!("char: {}\r", byte as char);
-        println!("binary: {:#b}}\r", byte);
+        println!("binary: {:#b}\r", byte);
         if byte == ('q' as u8 & MASK) {
             break;
         }

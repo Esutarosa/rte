@@ -1,11 +1,11 @@
-use std::io::{self, Read};
+use std::io::{self, Stdout, Write};
 use termion::{
     event::Key,
     input::TermRead,
     raw::{RawTerminal, IntoRawMode}
 };
 
-const EXIT_CHARACTER: char = "q";
+const EXIT_CHARACTER: char = 'q';
 
 pub struct Editor {
     exit: bool,
@@ -29,7 +29,7 @@ impl Editor {
         }
 
         println!("goodbye!\r");
-        self.stdout.flush();
+        self.stdout.flush()
     }
 
     /// When pressing ctrl+q changes the to true what end the programm
@@ -46,7 +46,7 @@ impl Editor {
     fn next_key(&self) -> Result<Key, io::Error> {
         match io::stdin().keys().next() {
             Some(key) => key,
-            None => Err(io::Error::New(
+            None => Err(io::Error::new(
                 io::ErrorKind::Other,
                 "Invalid input"
             ))

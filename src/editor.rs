@@ -7,16 +7,25 @@ use termion::{
 
 const EXIT_CHARACTER: char = 'q';
 
+struct ScreenSize {
+    width: u16,
+    height: u16,
+}
+
 pub struct Editor {
     exit: bool,
     stdout: RawTerminal<Stdout>,
+    screen_size: ScreenSize,
 }
 
 impl Editor {
     pub fn new() -> Result<Self, io::Error> {
+        let (width, height) = termion::terminal_size()?;
+
         Ok(Editor {
             exit: false,
             stdout: io::stdout().into_raw_mode()?,
+            screen_size: ScreenSize { width, height },
         })
     }
 
@@ -24,11 +33,27 @@ impl Editor {
     /// on the screen and blocks the loop until processes new keys
     pub fn run(&mut self) -> Result<(), io::Error> {
         while !self.exit {
-            println!("Please input key!\r");
+            self.render()?;
             self.process_key()?;
         }
 
-        println!("goodbye!\r");
+        Ok(())
+    }
+
+    fn render(&mut self) -> Result<(), io::Error> {
+        for row_num in 0..self.screen_size.height {
+            if row_num == self.screen_size.height / 2 {
+                let message = "Ayo from rust-text-editor";
+                let padding = " ".repeat(
+                    (self.screen_size.width / 2 + 1) as usize - message.len() / 2
+                );
+
+                println!("~{}{}\r", padding, message);
+            } else {
+                println!("~\r");
+            }
+        }
+
         self.stdout.flush()
     }
 

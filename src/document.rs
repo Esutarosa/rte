@@ -1,3 +1,4 @@
+
 use std::{
     fs::File,
     path::Path,
@@ -5,7 +6,7 @@ use std::{
 };
 
 pub struct Document {
-    pub ruws: Vec<String>,
+    pub rows: Vec<String>,
 }
 
 impl Document {
@@ -26,6 +27,8 @@ impl Document {
             },
         };
 
-        Ok(Self { rows: document_rows })
+        Ok(Self{
+            rows: document_rows,
+        })
     }
 }

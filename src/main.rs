@@ -12,13 +12,13 @@ fn main() {
         .version(VERSION)
         .arg(
             Arg::new(FILE_PATH_ARG)
-            .required(true)
-            .index(1)
+                .required(true)
+                .index(1)
         )
         .get_matches();
-
+    
     let file_path = matches.get_one::<String>(FILE_PATH_ARG).unwrap();
     let document = document::Document::new(file_path).unwrap();
-    let mut editor = editor::Editor::new().unwrap();
+    let mut editor = editor::Editor::new(document).unwrap();
     editor.run().unwrap();
 }

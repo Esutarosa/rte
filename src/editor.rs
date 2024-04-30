@@ -41,6 +41,7 @@ pub struct Editor {
     document: Document,
     screen_size: ScreenSize,
     cursor_position: Position,
+    screen_offset: Position,
 }
 
 impl Editor {
@@ -53,11 +54,13 @@ impl Editor {
             document,
             screen_size: ScreenSize { width, height: height.saturating_sub(PADDING_BUTTOM) },
             cursor_position: Position::default(),
+            screen_offset: Position::default(),
         })
     }
 
     pub fn run(&mut self) -> Result<(), io::Error> {
         while !self.exit {
+            self.change_offsets();
             self.render()?;
             self.process_key()?;
         }
@@ -66,15 +69,17 @@ impl Editor {
     }
 
     fn render(&mut self) -> Result<(), io::Error> {
+        print!("{}", termion::cursor::Hide);
         print!("{}", termion::cursor::Goto::default());
 
         self.render_rows();
         self.render_status_bar();
 
         print!("{}", termion::cursor::Goto(
-            self.cursor_position.x.saturating_add(1) as u16,
-            self.cursor_position.y.saturating_add(1) as u16,
+            self.cursor_position.x.saturating_sub(self.screen_offset.x).saturating_add(1) as u16,
+            self.cursor_position.y.saturating_sub(self.screen_offset.y).saturating_add(1) as u16,
         ));
+        print!("{}", termion::cursor::Show);
 
         self.stdout.flush()
     }
@@ -82,12 +87,27 @@ impl Editor {
     fn render_rows(&self) {
         for row_num in 0..self.screen_size.height {
             print!("{}", termion::clear::CurrentLine);
-            if let Some(row) = self.document.rows.get(row_num as usize) {
-                println!("{}\r", row);
+            if let Some(row) = self.document.rows.get(
+                self.screen_offset.y.saturating_add(row_num as usize)
+            ) {
+                self.render_row(row);
             } else {
                 println!("\r");
             }
         }
+    }
+
+    fn render_row(&self, row: &str) {
+        let start = self.screen_offset.x;
+        let end = start.saturating_add(self.screen_size.width as usize);
+
+        let render_target: String = row
+            .chars()
+            .skip(start)
+            .take(end - start)
+            .collect();
+
+        println!("{}\r", render_target);
     }
 
     fn render_status_bar(&self) {
@@ -156,6 +176,26 @@ impl Editor {
         } else if self.cursor_position.y < self.document.rows.len() - 1 {
             self.cursor_position.y = self.cursor_position.y.saturating_add(1);
             self.cursor_position.x = DEFAULT_X_POSITION;
+        }
+    }
+
+    pub fn change_offsets(&mut self) {
+        let height = self.screen_size.height as usize;
+        if self.cursor_position.y < self.screen_offset.y {
+            self.screen_offset.y = self.cursor_position.y;
+        } else if self.cursor_position.y >= self.screen_offset.y.saturating_add(height) {
+            self.screen_offset.y = self.cursor_position.y
+                .saturating_sub(height)    
+                .saturating_add(1);
+        }
+
+        let width = self.screen_size.width as usize;
+        if self.cursor_position.x < self.screen_offset.x {
+            self.screen_offset.x = self.cursor_position.x;
+        } else if self.cursor_position.x >= self.screen_offset.x.saturating_add(width) {
+            self.screen_offset.x = self.cursor_position.x
+                .saturating_sub(width)
+                .saturating_add(1);
         }
     }
 
